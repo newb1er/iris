@@ -1,6 +1,7 @@
 package iris
 
 import (
+	"io"
 	"os"
 	"reflect"
 	"testing"
@@ -89,6 +90,42 @@ func TestApplication_String(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.app.String(); got != tt.want {
 				t.Errorf("Application.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_customHostServerLogger_Write(t *testing.T) {
+	type fields struct {
+		parent     io.Writer
+		ignoreLogs [][]byte
+	}
+	type args struct {
+		p []byte
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    int
+		wantErr bool
+	}{
+		{"l.ignoreLogs is not empty", fields{os.Stdout, [][]byte{[]byte("abc"), []byte("123")}}, args{[]byte("123\n")}, 0, false},
+		{"l.ignoreLogs is empty", fields{os.Stdout, [][]byte{}}, args{[]byte("123\n")}, 4, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &customHostServerLogger{
+				parent:     tt.fields.parent,
+				ignoreLogs: tt.fields.ignoreLogs,
+			}
+			got, err := l.Write(tt.args.p)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("customHostServerLogger.Write() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("customHostServerLogger.Write() = %v, want %v", got, tt.want)
 			}
 		})
 	}
