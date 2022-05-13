@@ -40,6 +40,7 @@ func Test_newLogger(t *testing.T) {
 	for _, tt := range tests {
 		tt.want.Child(tt.args.app)
 		tt.want.SetChildPrefix(tt.args.appName)
+		originEnv := os.Getenv("IRIS_APP_NAME")
 
 		t.Run(tt.name, func(t *testing.T) {
 			os.Setenv("IRIS_APP_NAME", tt.args.appName)
@@ -53,6 +54,8 @@ func Test_newLogger(t *testing.T) {
 				t.Errorf("Expected: %+v, got: %+v", tt.args.appName, tt.args.app.name)
 			}
 		})
+
+		os.Setenv("IRIS_APP_NAME", originEnv)
 	}
 }
 
