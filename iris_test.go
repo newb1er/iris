@@ -1,6 +1,7 @@
 package iris
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -60,6 +61,8 @@ func Test_newLogger(t *testing.T) {
 }
 
 func TestApplication_SetName(t *testing.T) {
+	defaultLogger := golog.Default
+
 	type args struct {
 		appName string
 	}
@@ -69,12 +72,42 @@ func TestApplication_SetName(t *testing.T) {
 		args args
 		want *Application
 	}{
-		// TODO: Add test cases.
+		{
+			name: "`app.name` is not specified",
+			app: &Application{
+				name:   "",
+				logger: defaultLogger.Clone(),
+			},
+			args: args{appName: "app"},
+			want: &Application{
+				name:   "app",
+				logger: defaultLogger.SetChildPrefix("app"),
+			},
+		},
+		{
+			name: "`app.name` is specified",
+			app: &Application{
+				name:   "ouch",
+				logger: defaultLogger.Clone(),
+			},
+			args: args{appName: "app"},
+			want: &Application{
+				name:   "app",
+				logger: defaultLogger.Clone(),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.app.SetName(tt.args.appName); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Application.SetName() = %v, want %v", got, tt.want)
+			fmt.Printf("%+v", tt.app)
+			got := tt.app.SetName(tt.args.appName)
+
+			if !reflect.DeepEqual(got.name, tt.want.name) {
+				t.Errorf("Expected: %+v, Got: %+v", tt.want.name, got.name)
+			}
+
+			if !reflect.DeepEqual(got.logger, tt.want.logger) {
+				t.Errorf("Expected: %+v, Got: %+v", tt.want.logger, got.logger)
 			}
 		})
 	}
