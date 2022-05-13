@@ -1,6 +1,7 @@
 package iris
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
@@ -8,20 +9,47 @@ import (
 )
 
 func Test_newLogger(t *testing.T) {
+	defaultLogger := golog.Default
+
 	type args struct {
-		app *Application
+		app     *Application
+		appName string
 	}
 	tests := []struct {
 		name string
 		args args
 		want *golog.Logger
 	}{
-		// TODO: Add test cases.
+		// test cases
+		{
+			"create logger with out IRIS_APP_NAME set",
+			args{
+				app:     &Application{},
+				appName: "",
+			}, defaultLogger.Clone()},
+		{
+			"create logger with IRIS_APP_NAME set",
+			args{
+				app:     &Application{},
+				appName: "app",
+			},
+			defaultLogger.Clone(),
+		},
 	}
 	for _, tt := range tests {
+		tt.want.Child(tt.args.app)
+		tt.want.SetChildPrefix(tt.args.appName)
+
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newLogger(tt.args.app); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newLogger() = %v, want %v", got, tt.want)
+			os.Setenv("IRIS_APP_NAME", tt.args.appName)
+			got := newLogger(tt.args.app)
+
+			if !reflect.DeepEqual(got.Prefix, tt.want.Prefix) {
+				t.Errorf("Expected: %+v, got: %+v", got.Prefix, tt.want.Prefix)
+			}
+
+			if !reflect.DeepEqual(tt.args.app.name, tt.args.appName) {
+				t.Errorf("Expected: %+v, got: %+v", tt.args.appName, tt.args.app.name)
 			}
 		})
 	}
@@ -54,7 +82,6 @@ func TestApplication_String(t *testing.T) {
 		app  *Application
 		want string
 	}{
-		// TODO: Add test cases.
 		{"app with no name", &Application{}, ""},
 		{"app with name 'iris'", &Application{name: "iris"}, "iris"},
 	}
