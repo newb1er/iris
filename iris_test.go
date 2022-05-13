@@ -133,3 +133,35 @@ func Test_customHostServerLogger_Write(t *testing.T) {
 		})
 	}
 }
+
+func TestApplication_Configure(t *testing.T) {
+	tests := []struct {
+		name   string
+		fields *Application
+		args   []Configurator
+		want   *Application
+	}{
+		{
+			"configure with no configurators",
+			&Application{},
+			[]Configurator{},
+			&Application{},
+		},
+		{
+			"configure with nil and non-nil configurators",
+			&Application{builded: false},
+			[]Configurator{nil, func(a *Application) { a.builded = true }},
+			&Application{builded: true},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app := &Application{
+				builded: tt.fields.builded,
+			}
+			if got := app.Configure(tt.args...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Application.Configure() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
