@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -163,5 +164,172 @@ func TestJSON(t *testing.T) {
 			}
 			t.Fatalf("[%d] expected: %s but got: %s", i, ex, g)
 		}
+	}
+}
+
+func TestErrEntryNotFound_As_PC(t *testing.T) {
+	type fields struct {
+		Key  string
+		Kind reflect.Kind
+		Type reflect.Type
+	}
+	type args struct {
+		target interface{}
+	}
+	type fakeErrEntryNotFound struct {
+		foo  string
+		Key  string
+		Kind reflect.Kind
+		Type reflect.Type
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			"PC Predicate == true",
+			fields{
+				Key:  "",
+				Kind: reflect.Invalid,
+			},
+			args{target: reflect.ValueOf(&ErrEntryNotFound{
+				Key:  "",
+				Kind: reflect.Invalid,
+			}).Interface()},
+			true,
+		},
+		{
+			"PC Predicate == false",
+			fields{
+				Key:  "123",
+				Kind: reflect.Invalid,
+			},
+			args{target: reflect.ValueOf(&fakeErrEntryNotFound{
+				foo:  "bar",
+				Key:  "abc",
+				Kind: reflect.String,
+			}).Interface()},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &ErrEntryNotFound{
+				Key:  tt.fields.Key,
+				Kind: tt.fields.Kind,
+				Type: tt.fields.Type,
+			}
+			if got := e.As(tt.args.target); got != tt.want {
+				t.Errorf("ErrEntryNotFound.As() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestErrEntryNotFound_As_CC(t *testing.T) {
+	TestErrEntryNotFound_As_PC(t)
+}
+
+func TestErrEntryNotFound_As_CACC(t *testing.T) {
+	type fields struct {
+		Key  string
+		Kind reflect.Kind
+		Type reflect.Type
+	}
+	type args struct {
+		target interface{}
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			"CACC FTTFF -> F",
+			fields{
+				Key:  "",
+				Kind: reflect.Invalid,
+			},
+			args{target: reflect.ValueOf(&ErrEntryNotFound{
+				Key:  "123",
+				Kind: reflect.Invalid,
+			}).Interface()},
+			false,
+		},
+		{
+			"CACC FFTFF -> T",
+			fields{
+				Key:  "123",
+				Kind: reflect.Invalid,
+			},
+			args{target: reflect.ValueOf(&ErrEntryNotFound{
+				Key:  "",
+				Kind: reflect.Invalid,
+			}).Interface()},
+			true,
+		},
+		{
+			"CACC FTFFF -> T",
+			fields{
+				Key:  "123",
+				Kind: reflect.String,
+			},
+			args{target: reflect.ValueOf(&ErrEntryNotFound{
+				Key:  "123",
+				Kind: reflect.String,
+			}).Interface()},
+			true,
+		},
+		{
+			"CACC FFFTT -> F",
+			fields{
+				Key:  "",
+				Kind: reflect.Invalid,
+			},
+			args{target: reflect.ValueOf(&ErrEntryNotFound{
+				Key:  "",
+				Kind: reflect.String,
+			}).Interface()},
+			false,
+		},
+		{
+			"CACC FFFFT -> T",
+			fields{
+				Key:  "",
+				Kind: reflect.String,
+			},
+			args{target: reflect.ValueOf(&ErrEntryNotFound{
+				Key:  "",
+				Kind: reflect.Invalid,
+			}).Interface()},
+			true,
+		},
+		{
+			"CACC FFFTF -> T",
+			fields{
+				Key:  "",
+				Kind: reflect.String,
+			},
+			args{target: reflect.ValueOf(&ErrEntryNotFound{
+				Key:  "",
+				Kind: reflect.String,
+			}).Interface()},
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &ErrEntryNotFound{
+				Key:  tt.fields.Key,
+				Kind: tt.fields.Kind,
+				Type: tt.fields.Type,
+			}
+			if got := e.As(tt.args.target); got != tt.want {
+				t.Errorf("ErrEntryNotFound.As() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
