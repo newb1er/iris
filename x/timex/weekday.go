@@ -82,13 +82,17 @@ func BackwardsToMonday(end time.Time) []time.Time {
 
 func GetWeekDate(now time.Time, weekday, start, end time.Weekday) time.Time {
 	dates := GetWeekdays(now, start, end)
-	for _, d := range dates {
-		if d.Weekday() == weekday {
-			return d
-		}
-	}
 
-	return time.Time{}
+	// first element of dates is `start`
+	idx := (weekday - start + 7) % 7
+
+	// if weekday is not included in dates,
+	// return time.Time{}
+	if int(idx) < len(dates) {
+		return dates[idx]
+	} else {
+		return time.Time{}
+	}
 }
 
 // GetWeekStart returns the date of the first week day (startWeekday) of the current now's week.
