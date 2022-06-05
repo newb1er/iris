@@ -313,6 +313,22 @@ func TestGetWeekDate(t *testing.T) {
 			Weekday:      time.Wednesday,
 			ExpectedDate: "2022-02-09T00:00:00",
 		},
+		// Test Tuesday to Thursday
+		{
+			Now:          now,
+			Start:        time.Tuesday,
+			End:          time.Thursday,
+			Weekday:      time.Monday,
+			ExpectedDate: time.Time{}.Format(jsonx.ISO8601Layout),
+		},
+		// Test if Start and End are the same
+		{
+			Now:          now,
+			Start:        time.Monday,
+			End:          time.Monday,
+			Weekday:      time.Thursday,
+			ExpectedDate: "2022-02-10T00:00:00",
+		},
 	}
 
 	for i := range tests {
@@ -320,6 +336,7 @@ func TestGetWeekDate(t *testing.T) {
 		t.Run(fmt.Sprintf("%s[%s]", t.Name(), tt.Weekday.String()), func(t *testing.T) {
 			weekDate := GetWeekDate(tt.Now.ToTime(), tt.Weekday, tt.Start, tt.End)
 			if got := weekDate.Format(jsonx.ISO8601Layout); got != tt.ExpectedDate {
+				t.Logf("weekday: %d", tt.Weekday)
 				t.Fatalf("[%d] expected week date: %s but got: %s ", i+1, tt.ExpectedDate, got)
 			}
 		})
