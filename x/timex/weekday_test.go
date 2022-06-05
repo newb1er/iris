@@ -2,6 +2,7 @@ package timex
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -413,7 +414,7 @@ func checkDates(t *testing.T, typ DateRangeType, expected []string, dates []time
 	}
 }
 
-func TestBetweenAndBackwardsN(t *testing.T) {
+func TestBetweenAndBackwards(t *testing.T) {
 	start, err := time.Parse(jsonx.ISO8601Layout, "2021-03-26T00:00:00")
 	if err != nil {
 		t.Fatal(err)
@@ -508,4 +509,59 @@ func TestBetweenAndBackwardsN(t *testing.T) {
 	}
 
 	checkDates(t, MonthRange, expectedMonthDates, dates)
+}
+
+func TestBackwardsYearRange(t *testing.T) {
+	end, err := time.Parse(jsonx.ISO8601Layout, "2021-04-01T00:00:00")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	daysOfYear := 366
+
+	dates := Backwards(YearRange, end, 1)
+
+	if len(dates) != daysOfYear {
+		t.Errorf("Length of dates got: %d, expected: %d", len(dates), daysOfYear)
+	}
+}
+
+func TestBackwardsN(t *testing.T) {
+	type args struct {
+		typ DateRangeType
+		n   int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []time.Time
+	}{
+		{
+			name: "Test DayRange",
+			args: args{DayRange, 2},
+			want: Backwards(DayRange, time.Now(), 2),
+		},
+		{
+			name: "Test WeekRange",
+			args: args{WeekRange, 1},
+			want: Backwards(WeekRange, time.Now(), 1),
+		},
+		{
+			name: "Test MonthRange",
+			args: args{MonthRange, 1},
+			want: Backwards(MonthRange, time.Now(), 1),
+		},
+		{
+			name: "Test YearRange",
+			args: args{YearRange, 1},
+			want: Backwards(YearRange, time.Now(), 1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := BackwardsN(tt.args.typ, tt.args.n); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("BackwardsN() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
